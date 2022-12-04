@@ -1,0 +1,22 @@
+[package]
+name = "anyhow-ctx"
+version = "1.0.0"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/wiktorsikora/anyhow-ctx"
+description = "Set the anyhow error context using handy attribute."
+keywords = ["anyhow", "context", "doc", "error", "macro"]
+categories = ["development-tools"]
+authors = ["Wiktor Sikora <wiktorsikora7@gmail.com>"]
+readme = "README.md"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+anyhow = { version = "1.0.66" }
+syn = { version = "1.0.105", features = ["full", "extra-traits"] }
+proc-macro2 = { version = "1.0.47", features = ["nightly"] }
+quote = "1.0.21"
+
+[dev-dependencies]
