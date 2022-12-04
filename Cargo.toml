@@ -14,9 +14,10 @@ edition = "2021"
 proc-macro = true
 
 [dependencies]
-anyhow = { version = "1.0.66" }
 syn = { version = "1.0.105", features = ["full", "extra-traits"] }
 proc-macro2 = { version = "1.0.47", features = ["nightly"] }
 quote = "1.0.21"
 
 [dev-dependencies]
+anyhow = { version = "1.0.66" }
+tokio = { version = "1.22.0", default-features = false, features = ["test-util", "rt", "macros"] }

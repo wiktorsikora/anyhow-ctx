@@ -1,14 +1,43 @@
-use syn::{Expr, Token};
+use proc_macro2::TokenStream;
+use quote::quote;
+use std::marker::PhantomData;
 use syn::parse::{Parse, ParseStream};
+use syn::{Expr, LitStr, Token};
 
 #[derive(Default, Debug)]
-pub (crate) struct ContextArgs {
-    context: Option<Expr>
+pub(crate) struct ContextArgs {
+    context: Option<Expr>,
+    fmt: Option<LitStr>,
 }
 
 impl ContextArgs {
-    pub fn get_context(self) -> Expr {
-        self.context.expect("missing context")
+    pub fn get_context(self) -> TokenStream {
+        let Self { context, fmt } = self;
+
+        if let Some(ctx) = context {
+            return quote!(#ctx);
+        }
+        if let Some(fmt) = fmt {
+            return quote!(format!(#fmt));
+        }
+        panic!("expected `context` or `fmt` arguments")
+    }
+}
+
+struct CtxArg<Keyword: Parse, Value: Parse> {
+    value: Value,
+    _p: PhantomData<Keyword>,
+}
+
+impl<Keyword: Parse, Value: Parse> Parse for CtxArg<Keyword, Value> {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
+        let _ = input.parse::<Keyword>()?;
+        let _ = input.parse::<Token![=]>()?;
+        let value = input.parse()?;
+        Ok(Self {
+            value,
+            _p: PhantomData,
+        })
     }
 }
 
@@ -21,12 +50,16 @@ impl Parse for ContextArgs {
                 if args.context.is_some() {
                     return Err(input.error("expected only a single `context` argument"));
                 }
-                let _ = input.parse::<keyword::context>()?;
-                let _ = input.parse::<Token![=]>()?;
-                let context = input.parse::<Expr>()?;
+                let context = input.parse::<CtxArg<keyword::context, Expr>>()?.value;
                 args.context = Some(context);
+            } else if lookahead.peek(keyword::fmt) {
+                if args.fmt.is_some() {
+                    return Err(input.error("expected only a single `fmt` argument"));
+                }
+                let fmt = input.parse::<CtxArg<keyword::fmt, LitStr>>()?.value;
+                args.fmt = Some(fmt);
             } else {
-                panic!("unexpected arguments")
+                return Err(input.error("unexpected arguments"));
             }
         }
         Ok(args)
@@ -35,4 +68,5 @@ impl Parse for ContextArgs {
 
 mod keyword {
     syn::custom_keyword!(context);
+    syn::custom_keyword!(fmt);
 }
